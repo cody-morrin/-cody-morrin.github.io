@@ -1,0 +1,8 @@
+{
+  "name": "wordle-15",
+  "private": true,
+  "type": "module",
+  "description": "Wordle where every coloured square has a 15% chance of lying",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=22" }
+}

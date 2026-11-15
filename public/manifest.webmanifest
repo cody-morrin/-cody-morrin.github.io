@@ -1,0 +1,10 @@
+{
+  "name": "Wordle ±15%",
+  "short_name": "Wordle ±15%",
+  "description": "Wordle, except every coloured square has a 15% chance of lying.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#121213",
+  "theme_color": "#121213",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

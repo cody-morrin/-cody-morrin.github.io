@@ -1,0 +1,7 @@
+# docker compose up -d --build   → http://localhost:8080 (change the left 8080 for another port)
+services:
+  wordle:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"

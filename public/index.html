@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Wordle, except every coloured square has a 15% chance of lying.">
+<title>Wordle ±15%</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+<script src="words.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <button class="icon" id="help-btn" type="button" aria-label="How to play" title="How to play">?</button>
+  <h1>Wordle <span class="badge" title="Every coloured square has a 15% chance of lying">±15%</span></h1>
+  <button class="icon" id="stats-btn" type="button" aria-label="Statistics" title="Statistics">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M4 20V10h3v10H4Zm6.5 0V4h3v16h-3ZM17 20v-7h3v7h-3Z"/></svg>
+  </button>
+</header>
+<nav class="tabs" aria-label="Game">
+  <a href="./" id="tab-daily">Daily</a>
+  <a href="random.html" id="tab-random">Random</a>
+  <span class="label" id="label"></span>
+</nav>
+<main id="main">
+  <div id="board" role="grid" aria-label="Guesses"></div>
+  <div class="after" id="after" hidden>
+    <button type="button" class="pill" id="truth-btn" aria-pressed="false">Show the truth</button>
+    <button type="button" class="pill" id="again-btn" hidden>New word</button>
+  </div>
+</main>
+<div id="keyboard" aria-label="Keyboard"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<dialog id="help-dlg" aria-labelledby="help-title">
+  <form method="dialog" class="close"><button aria-label="Close">×</button></form>
+  <h2 id="help-title">How to play</h2>
+  <p>Guess the word in 6 tries, like Wordle. Each guess must be a real five-letter word. Press Enter to submit.</p>
+  <p>After each guess the squares change colour:</p>
+  <div class="example" aria-hidden="true">
+    <div class="tile mini correct">W</div><div class="tile mini absent">E</div><div class="tile mini absent">A</div><div class="tile mini absent">R</div><div class="tile mini absent">Y</div>
+  </div>
+  <p><b>Green</b>: the letter is in the word and in the right spot. <b>Yellow</b>: it's in the word but in another spot. <b>Grey</b>: it isn't in the word (or not that many times).</p>
+  <p class="warn"><b>The twist:</b> every square has a <b>15% chance of lying</b>. When a square lies, it shows one of the other two colours instead (each just as likely). The keyboard only knows what the squares showed you.</p>
+  <p>Get the word right and that row is all green, honestly. When the game ends you can press <b>Show the truth</b> to see which squares lied.</p>
+  <p><b>Daily</b> is the same word for everyone, with a new one at midnight (your time). <b>Random</b> is a new word every time you load it.</p>
+</dialog>
+
+<dialog id="end-dlg" aria-labelledby="end-title">
+  <form method="dialog" class="close"><button aria-label="Close">×</button></form>
+  <h2 id="end-title"></h2>
+  <p class="answer" id="end-answer"></p>
+  <p class="lies" id="end-lies"></p>
+  <section id="stats" hidden>
+    <div class="nums">
+      <div><b id="s-played">0</b><span>Played</span></div>
+      <div><b id="s-win">0</b><span>Win %</span></div>
+      <div><b id="s-streak">0</b><span>Current streak</span></div>
+      <div><b id="s-best">0</b><span>Max streak</span></div>
+    </div>
+    <h3>Guess distribution</h3>
+    <div id="dist"></div>
+  </section>
+  <div class="row-btns">
+    <button type="button" class="primary" id="share-btn">Share</button>
+    <button type="button" class="pill" id="truth-btn-2">Show the truth</button>
+    <button type="button" class="pill" id="again-btn-2" hidden>New word</button>
+  </div>
+  <p class="next" id="next"></p>
+</dialog>
+</body>
+</html>
