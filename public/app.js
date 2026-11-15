@@ -5,9 +5,11 @@
 // Daily (/): one word per local calendar day, the same for everyone; the game is kept in this browser, lies included,
 // so reloading changes nothing. Random (random.html, or /random): a new word, and new lies, on every load. All links are
 // relative, so the site works from any address, in a subfolder too.
+// 🤫 A secret: the ±15% badge in the header sets how often squares lie (see "the secret" below).
 (() => {
   'use strict';
-  const LIE = 0.15, ROWS = 6, LEN = 5;
+  const ROWS = 6, LEN = 5;
+  const LIE = 15; // % of squares that lie, unless the secret has set another rate in this browser
   const COLORS = ['correct', 'present', 'absent'];
   const RANK = { absent: 1, present: 2, correct: 3 };
   const EMOJI = { correct: '🟩', present: '🟨' };
@@ -37,8 +39,9 @@
     }
     return out;
   }
+  let lie = LIE;
   const fib = (truth) => truth.map((c) => {
-    if (rand() >= LIE) return c;
+    if (rand() >= lie / 100) return c;
     const others = COLORS.filter((x) => x !== c);
     return others[rand() < 0.5 ? 0 : 1];
   });
@@ -55,7 +58,8 @@
       const sound = kept && kept.day === DAY && kept.answer === answer && Array.isArray(kept.guesses) && Array.isArray(kept.shown)
         && kept.guesses.length === kept.shown.length && kept.guesses.length <= ROWS
         && kept.guesses.every((g) => typeof g === 'string' && /^[a-z]{5}$/.test(g))
-        && kept.shown.every((r) => Array.isArray(r) && r.length === LEN && r.every((c) => COLORS.includes(c)));
+        && kept.shown.every((r) => Array.isArray(r) && r.length === LEN && r.every((c) => COLORS.includes(c)))
+        && (kept.rates === undefined || (Array.isArray(kept.rates) && kept.rates.every((x) => Number.isFinite(x) && x >= 0 && x <= 100)));
       if (sound) return kept;
       return { day: DAY, answer, guesses: [], shown: [], over: '' };
     }
@@ -200,6 +204,7 @@
     const g = typed, real = score(g, game.answer), won = g === game.answer;
     game.guesses.push(g);
     game.shown.push(won ? real : fib(real));
+    game.rates = [...(game.rates || []), lie]; // the lie rate each guess was made at (the secret can change it)
     if (won) game.over = 'won';
     else if (game.guesses.length === ROWS) game.over = 'lost';
     typed = '';
@@ -280,7 +285,8 @@
   async function share() {
     const dark = matchMedia('(prefers-color-scheme: dark)').matches;
     const grid = game.shown.map((row) => row.map((c) => EMOJI[c] || (dark ? '⬛' : '⬜')).join('')).join('\n');
-    const head = `Wordle ±15% ${MODE === 'daily' ? `#${DAY + 1}` : '(random)'} ${game.over === 'won' ? game.guesses.length : 'X'}/6 · ${lies()} lies`;
+    const used = game.guesses.map((g, r) => game.rates?.[r] ?? LIE), lo = Math.min(...used), hi = Math.max(...used);
+    const head = `Wordle ±${lo === hi ? lo : `${lo}–${hi}`}% ${MODE === 'daily' ? `#${DAY + 1}` : '(random)'} ${game.over === 'won' ? game.guesses.length : 'X'}/6 · ${lies()} lies`;
     const text = `${head}\n\n${grid}\n${location.origin}${location.pathname}`;
     try {
       if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ text }); return; }
@@ -289,14 +295,67 @@
   }
 
   // ---- toasts ----
+  const toastBox = () => { // above an open dialog, not behind it (or inside a closed one)
+    const box = $('toasts');
+    (document.querySelector('dialog[open]') || document.body).append(box);
+    return box;
+  };
   function toast(msg, ms = 1200) {
     const el = document.createElement('div');
     el.className = 'toast';
     el.textContent = msg;
-    (document.querySelector('dialog[open]') || document.body).append($('toasts')); // (above an open dialog, not behind it)
-    $('toasts').prepend(el);
+    toastBox().prepend(el);
     setTimeout(() => { el.classList.add('gone'); setTimeout(() => el.remove(), 300); }, ms);
   }
+
+  // ---- 🤫 the secret: the badge sets the lie rate (0–100%), kept in this browser. Scroll on it (1% a notch), swipe up
+  // or down on it (1% every 12 px), or click/tap it (up to the next 5%, from 100% back to 0%). It counts for guesses
+  // from then on; squares already shown keep what they showed. Nothing shows it can be touched.
+  const badge = $('rate-badge');
+  let rateToast = null, rateTimer = 0;
+  function setLie(v, say) {
+    lie = Math.max(0, Math.min(100, Math.round(v)));
+    badge.textContent = `±${lie}%`;
+    badge.title = `Every coloured square has a ${lie}% chance of lying`;
+    document.title = `Wordle ±${lie}%`;
+    for (const el of document.querySelectorAll('[data-rate]')) el.textContent = `${lie}%`;
+    if (!say) return;
+    store.set('w15:lie', lie);
+    badge.classList.remove('nudge');
+    void badge.offsetWidth;
+    badge.classList.add('nudge');
+    const box = toastBox();
+    if (!rateToast?.isConnected) { rateToast = document.createElement('div'); rateToast.className = 'toast'; box.prepend(rateToast); }
+    rateToast.classList.remove('gone');
+    rateToast.textContent = lie === LIE ? `Squares lie ${lie}% of the time (as normal)` : `Squares now lie ${lie}% of the time`;
+    clearTimeout(rateTimer);
+    rateTimer = setTimeout(() => { const el = rateToast; el.classList.add('gone'); setTimeout(() => { if (el.classList.contains('gone')) el.remove(); }, 300); }, 1400);
+  }
+  { const kept = store.get('w15:lie'); if (Number.isFinite(kept)) setLie(kept, false); }
+  let wheel = 0;
+  badge.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) return; // (a pinch or Ctrl+wheel: zooming, not the secret)
+    e.preventDefault();
+    const dy = e.deltaMode ? e.deltaY * 40 : e.deltaY; // (lines → pixels)
+    if (Math.abs(dy) >= 50) { wheel = 0; return setLie(lie - Math.sign(dy), true); } // a mouse wheel: a notch, 1%
+    wheel += dy; // a touchpad: little by little
+    if (Math.abs(wheel) >= 50) { const n = Math.trunc(wheel / 50); wheel -= n * 50; setLie(lie - n, true); }
+  }, { passive: false });
+  let swipe = null, swiped = 0;
+  badge.addEventListener('touchstart', (e) => { swipe = { y: e.touches[0].clientY, from: lie, moved: false }; }, { passive: true });
+  badge.addEventListener('touchmove', (e) => {
+    if (!swipe) return;
+    e.preventDefault();
+    const dy = swipe.y - e.touches[0].clientY;
+    if (Math.abs(dy) > 8) swipe.moved = true;
+    const v = Math.max(0, Math.min(100, swipe.from + Math.round(dy / 12)));
+    if (swipe.moved && v !== lie) setLie(v, true);
+  }, { passive: false });
+  badge.addEventListener('touchend', () => { if (swipe?.moved) swiped = Date.now(); swipe = null; });
+  badge.addEventListener('click', () => {
+    if (Date.now() - swiped < 500) return; // (the end of a swipe, not a tap)
+    setLie(lie >= 100 ? 0 : Math.floor(lie / 5) * 5 + 5, true);
+  });
 
   // ---- start ----
   game = newGame();

@@ -82,7 +82,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-size: 13px; font-weight: 700; letter-spacing: 0;
   padding: 2px 7px; border-radius: 999px;
   background: var(--present); color: var(--on-color);
+  user-select: none; -webkit-user-select: none; touch-action: none; /* (the secret: scrolled, swiped and tapped, app.js) */
 }
+.badge.nudge { animation: pop 150ms; }
 .icon {
   width: 40px; height: 40px; border: 0; background: none; border-radius: 50%;
   display: grid; place-items: center; font-size: 20px; font-weight: 700;
@@ -232,5 +234,5 @@ body.scroll main { flex: none; }
   .top h1 { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tile.reveal, .tile.tbd, .tile.win, .row.shake { animation: none; }
+  .tile.reveal, .tile.tbd, .tile.win, .row.shake, .badge.nudge { animation: none; }
 }
