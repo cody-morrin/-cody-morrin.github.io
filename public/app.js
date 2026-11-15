@@ -1,6 +1,6 @@
 // Wordle where the hints lie. Scored exactly like Wordle (greens first, then yellows for the letters left over, so a
 // letter is yellow only as many times as the word still has it), but every square then has a LIE chance of showing one
-// of the other two colours instead, each as likely. The keyboard is coloured by what the squares showed, never by the
+// of the other two colors instead, each as likely. The keyboard is colored by what the squares showed, never by the
 // truth. A right guess is all green, honestly, and when the game is over "Show the truth" shows which squares lied.
 // Daily (/): one word per local calendar day, the same for everyone; the game is kept in this browser, lies included,
 // so reloading changes nothing. Random (random.html, or /random): a new word, and new lies, on every load. All links are
@@ -50,7 +50,7 @@
   const today = () => { const d = new Date(); return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - START) / 864e5); };
   const DAY = today();
   const dailyWord = (day) => ANSWERS[((day % ANSWERS.length) + ANSWERS.length) % ANSWERS.length];
-  let game; // { day?, answer, guesses: [], shown: [[colour]], over: '' | 'won' | 'lost' }
+  let game; // { day?, answer, guesses: [], shown: [[color]], over: '' | 'won' | 'lost' }
   function newGame() {
     if (MODE === 'daily') {
       const kept = store.get(KEY.game);
@@ -113,9 +113,9 @@
     [...board.children[r].children].forEach((t, i) => {
       const c = truth ? real[i] : shown[i];
       t.textContent = g[i];
-      t.className = `tile ${c}${animate ? ' reveal' : ''}${truth && shown[i] !== real[i] ? ' lied' : ''}`;
+      t.className = `tile ${shown[i]}${animate ? ' reveal' : ''}${truth && shown[i] !== real[i] ? ' lied' : ''}`;
       t.style.setProperty('--d', `${i * 300}ms`);
-      t.style.setProperty('--claimed', `var(--${shown[i]})`);
+      t.style.setProperty('--lied', `var(--${c})`);
       t.setAttribute('aria-label', `${g[i].toUpperCase()}, ${truth && shown[i] !== real[i] ? `really ${NAMES[real[i]]}, showed ${NAMES[shown[i]]}` : NAMES[c]}`);
     });
   }
@@ -151,7 +151,7 @@
     document.documentElement.style.setProperty('--tile', `${tile}px`);
   }
 
-  // ---- the keyboard: coloured by what the squares showed ----
+  // ---- the keyboard: colored by what the squares showed ----
   const LAYOUT = ['qwertyuiop', '-asdfghjkl-', '>zxcvbnm<'];
   const keys = {};
   function drawKeyboard() {
@@ -233,13 +233,13 @@
   function setTruth(on) {
     if (!game.over) return;
     truth = on;
-    for (const id of ['truth-btn', 'truth-btn-2']) { $(id).setAttribute('aria-pressed', String(on)); $(id).textContent = on ? 'Show what I saw' : 'Show the truth'; }
+    for (const id of ['truth-btn', 'truth-btn-2']) { $(id).setAttribute('aria-pressed', String(on)); $(id).textContent = on ? 'Show what I saw' : 'Show lies'; }
     game.guesses.forEach((g, r) => paintRow(r, false));
     let legend = document.querySelector('.legend');
     if (on && !legend) {
       legend = document.createElement('p');
       legend.className = 'legend';
-      legend.textContent = 'True colours. Dashed squares lied: the corner is the colour they showed you.';
+      legend.textContent = 'Red outlines are lies. The corner is the true color.';
       $('after').before(legend);
     } else if (!on && legend) legend.remove();
     sizeBoard();
@@ -286,7 +286,7 @@
     const dark = matchMedia('(prefers-color-scheme: dark)').matches;
     const grid = game.shown.map((row) => row.map((c) => EMOJI[c] || (dark ? '⬛' : '⬜')).join('')).join('\n');
     const used = game.guesses.map((g, r) => game.rates?.[r] ?? LIE), lo = Math.min(...used), hi = Math.max(...used);
-    const head = `Wordle ±${lo === hi ? lo : `${lo}–${hi}`}% ${MODE === 'daily' ? `#${DAY + 1}` : '(random)'} ${game.over === 'won' ? game.guesses.length : 'X'}/6 · ${lies()} lies`;
+    const head = `Lydle ±${lo === hi ? lo : `${lo}–${hi}`}% ${MODE === 'daily' ? `#${DAY + 1}` : '(random)'} ${game.over === 'won' ? game.guesses.length : 'X'}/6 · ${lies()} lies`;
     const text = `${head}\n\n${grid}\n${location.origin}${location.pathname}`;
     try {
       if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ text }); return; }
@@ -316,8 +316,8 @@
   function setLie(v, say) {
     lie = Math.max(0, Math.min(100, Math.round(v)));
     badge.textContent = `±${lie}%`;
-    badge.title = `Every coloured square has a ${lie}% chance of lying`;
-    document.title = `Wordle ±${lie}%`;
+    badge.title = `Every colored square has a ${lie}% chance of lying`;
+    document.title = `Lydle ±${lie}%`;
     for (const el of document.querySelectorAll('[data-rate]')) el.textContent = `${lie}%`;
     if (!say) return;
     store.set('w15:lie', lie);

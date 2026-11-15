@@ -9,6 +9,7 @@
   --correct: #6aaa64;
   --present: #c9b458;
   --absent: #787c7e;
+  --warn: #c54949;
   --on-color: #ffffff;
   --dialog: #ffffff;
   --shadow: 0 8px 30px rgb(0 0 0 / 0.18);
@@ -81,7 +82,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .badge {
   font-size: 13px; font-weight: 700; letter-spacing: 0;
   padding: 2px 7px; border-radius: 999px;
-  background: var(--present); color: var(--on-color);
+  background: var(--warn); color: var(--on-color);
   user-select: none; -webkit-user-select: none; touch-action: none; /* (the secret: scrolled, swiped and tapped, app.js) */
 }
 .badge.nudge { animation: pop 150ms; }
@@ -141,12 +142,13 @@ main {
 }
 
 /* "Show the truth": the true colour, and a corner in the colour the square pretended to be */
-.tile.lied { outline: 3px dashed var(--text); outline-offset: -6px; }
+/* .tile.lied { outline: 3px solid var(--warn); outline-offset: -3px; } */
+.tile.lied { border: 3px solid var(--warn); }
 .tile.lied::after {
-  content: ""; position: absolute; top: 0; right: 0;
-  border-style: solid; border-width: 0 calc(var(--tile) * 0.36) calc(var(--tile) * 0.36) 0;
-  border-color: transparent var(--claimed) transparent transparent;
-  filter: drop-shadow(-1px 1px 0 rgb(0 0 0 / 0.35));
+  content: ""; position: absolute; top: -3px; right: -3px;
+  border-style: solid; border-width: 0 calc(var(--tile) * 0.5) calc(var(--tile) * 0.5) 0;
+  border-color: transparent var(--lied) transparent transparent;
+  filter: drop-shadow(-2.12px 2.12px 0 var(--warn)); /* 3 / sqrt(2) */
 }
 .legend { color: var(--muted); font-size: 13px; text-align: center; max-width: 340px; margin: 0; }
 
